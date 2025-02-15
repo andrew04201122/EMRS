@@ -75,14 +75,38 @@ class CasesFillPage(QWidget):
 
     def save_data(self):
         file_path = os.path.join("Data", "病例.csv")
-        with open(file_path, mode='a', newline='', encoding='utf-8-sig') as file:
+        new_data = []
+        for row in range(self.table.rowCount()):
+            item = self.table.item(row, 1)  # Get data from the second column
+            new_data.append(item.text() if item else "")
+
+        # Read existing data
+        existing_data = []
+        with open(file_path, mode='r', newline='', encoding='utf-8-sig') as file:
+            reader = csv.reader(file)
+            headers = next(reader)
+            for row in reader:
+                existing_data.append(row)
+
+        # Check for existing 病歷號碼 and replace if found
+        replaced = False
+        for i, row in enumerate(existing_data):
+            if row[1] == new_data[1]:  # Compare 病歷號碼
+                existing_data[i] = new_data
+                replaced = True
+                break
+
+        # If not replaced, append new data
+        if not replaced:
+            existing_data.append(new_data)
+
+        # Write updated data back to CSV
+        with open(file_path, mode='w', newline='', encoding='utf-8-sig') as file:
             writer = csv.writer(file)
-            row_data = []
-            for row in range(self.table.rowCount()):
-                item = self.table.item(row, 1)  # Get data from the second column
-                row_data.append(item.text() if item else "")
-            writer.writerow(row_data)
-        print("Data saved to CSV file:", row_data)
+            writer.writerow(headers)
+            writer.writerows(existing_data)
+
+        print("Data saved to CSV file:", new_data)
 
     def clear_data(self):
         for row in range(self.table.rowCount()):
