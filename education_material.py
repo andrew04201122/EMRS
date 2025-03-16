@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QPushButton,
     QComboBox, QFileDialog, QWidget, QLabel, QScrollArea, QHBoxLayout
 )
-from PySide6.QtGui import QPixmap, QImage
+from PySide6.QtGui import QPixmap, QImage, QFont
 from PySide6.QtCore import Qt
 import fitz  # PyMuPDF
 
@@ -28,19 +28,13 @@ class EducationMaterialPage(QMainWindow):
         self.setCentralWidget(self.central_widget)
         self.main_layout = QVBoxLayout(self.central_widget)
 
-        # 水平佈局區域（放置按鈕和下拉選單）
+        # 水平佈局區域（放置按鈕）
         self.top_layout = QHBoxLayout()
 
         # 新增檔案按鈕
         self.add_button = QPushButton("新增檔案")
         self.add_button.clicked.connect(self.add_file)
         self.top_layout.addWidget(self.add_button)
-
-        # 下拉選單
-        self.file_selector = QComboBox()
-        self.file_selector.addItem("請選擇檔案")
-        self.refresh_file_list()
-        self.top_layout.addWidget(self.file_selector)
 
         # 顯示檔案的按鈕
         self.display_button = QPushButton("顯示檔案")
@@ -57,13 +51,20 @@ class EducationMaterialPage(QMainWindow):
         self.print_button.clicked.connect(self.print_file)
         self.top_layout.addWidget(self.print_button)
 
-        self.main_layout.addLayout(self.top_layout)
-        
         # 回到主頁按鈕
         self.home_button = QPushButton("回到主頁")
         self.home_button.clicked.connect(self.go_to_home)
         self.top_layout.addWidget(self.home_button)
 
+        self.main_layout.addLayout(self.top_layout)
+
+        # 下拉選單
+        self.file_selector_layout = QHBoxLayout()
+        self.file_selector = QComboBox()
+        self.file_selector.addItem("請選擇檔案")
+        self.refresh_file_list()
+        self.file_selector_layout.addWidget(self.file_selector)
+        self.main_layout.addLayout(self.file_selector_layout)
 
         # 滾動區域來顯示檔案內容
         self.scroll_area = QScrollArea()
@@ -195,6 +196,43 @@ class EducationMaterialPage(QMainWindow):
         """回到主頁"""
         self.close()
         
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # Adjust button height to be 1/12 of the window height
+        button_height = self.height() // 12
+
+        # Adjust button font size based on button height
+        button_font_size = button_height // 3
+        button_font = QFont()
+        button_font.setPointSize(button_font_size)
+
+        # Set font for all buttons
+        for button in [self.add_button, self.display_button, self.open_button, self.print_button, self.home_button, self.prev_page_button, self.next_page_button]:
+            button.setFont(button_font)
+
+        # Calculate the maximum width among all buttons
+        max_button_width = max(self.add_button.sizeHint().width(),
+                               self.display_button.sizeHint().width(),
+                               self.open_button.sizeHint().width(),
+                               self.print_button.sizeHint().width(),
+                               self.home_button.sizeHint().width(),
+                               self.prev_page_button.sizeHint().width(),
+                               self.next_page_button.sizeHint().width())
+
+        # Set the size for all buttons
+        for button in [self.add_button, self.display_button, self.open_button, self.print_button, self.home_button, self.prev_page_button, self.next_page_button]:
+            button.setFixedSize(max_button_width, button_height)
+
+        # Adjust file selector height to be 1/20 of the window height
+        file_selector_height = self.height() // 20
+        self.file_selector.setFixedHeight(file_selector_height)
+        self.file_selector.setFixedWidth(self.width() - 20)  # Adjust width to fit within the window
+
+        # Adjust file selector font size
+        file_selector_font = QFont()
+        file_selector_font.setPointSize(button_font_size)
+        self.file_selector.setFont(file_selector_font)
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = EducationMaterialPage()

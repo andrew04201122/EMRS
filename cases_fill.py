@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QPushButton, QHeaderView
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QTableWidget, QMessageBox, QTableWidgetItem, QPushButton, QHeaderView
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication
@@ -52,19 +52,31 @@ class CasesFillPage(QWidget):
 
         layout.addWidget(self.table)
 
-        keep_button = QPushButton("暫存")
-        keep_button.clicked.connect(self.keep_data)
-        layout.addWidget(keep_button)
+        button_layout = QHBoxLayout()
 
-        save_button = QPushButton("保存")
-        save_button.clicked.connect(self.save_data)
-        layout.addWidget(save_button)
+        self.keep_button = QPushButton("暫存")
+        self.keep_button.clicked.connect(self.keep_data)
+        button_layout.addWidget(self.keep_button)
 
-        clear_button = QPushButton("清除")
-        clear_button.clicked.connect(self.clear_data)
-        layout.addWidget(clear_button)
+        self.save_button = QPushButton("保存")
+        self.save_button.clicked.connect(self.save_data)
+        button_layout.addWidget(self.save_button)
 
+        self.clear_button = QPushButton("清除")
+        self.clear_button.clicked.connect(self.clear_data)
+        button_layout.addWidget(self.clear_button)
+
+        # 回到主頁按鈕
+        self.home_button = QPushButton("回到主頁")
+        self.home_button.clicked.connect(self.go_to_home)
+        button_layout.addWidget(self.home_button)
+
+        layout.addLayout(button_layout)
         self.setLayout(layout)
+
+    def go_to_home(self):
+        """回到主頁"""
+        self.close()
 
     def keep_data(self):
         self.temp_data = []
@@ -123,6 +135,39 @@ class CasesFillPage(QWidget):
                 item = self.table.item(row, column)
                 if item:
                     item.setFont(font)
+
+        # Adjust button height to be 1/10 of the window height
+        button_height = self.height() // 10
+
+        # Adjust button font size based on button height
+        button_font_size = button_height // 3
+        button_font = QFont()
+        button_font.setPointSize(button_font_size)
+
+        # Set font for all buttons
+        for button in [self.keep_button, self.save_button, self.clear_button, self.home_button]:
+            button.setFont(button_font)
+
+        # Calculate the maximum width among all buttons
+        max_button_width = max(self.keep_button.sizeHint().width(),
+                               self.save_button.sizeHint().width(),
+                               self.clear_button.sizeHint().width(),
+                               self.home_button.sizeHint().width())
+
+        # Set the size for all buttons
+        for button in [self.keep_button, self.save_button, self.clear_button, self.home_button]:
+            button.setFixedSize(max_button_width, button_height)
+
+    def closeEvent(self, event):
+        if hasattr(self, 'temp_data') and self.temp_data:
+            reply = QMessageBox.question(self, '提示', '資料只存在暫存的狀態，是否要儲存資料？',
+                                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.save_data()
+            else:
+                event.accept()
+        else:
+            event.accept()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
