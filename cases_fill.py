@@ -12,7 +12,7 @@ class CasesFillPage(QWidget):
         super().__init__(parent)
         self.setWindowTitle("病例填寫")
         self.setGeometry(150, 150, 600, 400)
-        self.data_header = ["姓名", "身分證字號" ,"看診時間", "性別", "出生年月日", "診斷", "病史", "主訴", "病程", "處置", "康復計劃", "康復目標", "康復方法", "家庭支持", "社會支持", "ROM", "MMT", "end feel", "STTT", "special test"]
+        self.data_header = ["姓名", "身分證字號" ,"看診時間", "性別", "出生年月日", "手機號碼", "診斷", "病史", "主訴", "病程", "處置", "康復計劃", "康復目標", "康復方法", "家庭支持", "社會支持", "ROM", "MMT", "end feel", "STTT", "special test", "其他"]
 
         data_folder = "Data"
         data_file = os.path.join(data_folder, "data.csv")
@@ -100,10 +100,16 @@ class CasesFillPage(QWidget):
         pattern = r"^[A-Z][0-9]{9}$"
         return bool(re.match(pattern, id_number))
     
+    def validate_phone_number(self, phone_number):
+        """檢查手機號碼格式是否為XXXX-XXXXXX"""
+        pattern = r"^\d{4}-\d{6}$"
+        return bool(re.match(pattern, phone_number))
+    
     def validate_birth_date(self, date_str):
         """檢查出生年月日格式是否為XXXX/XX/XX"""
         pattern = r"^\d{4}/\d{2}/\d{2}$"
-        return bool(re.match(pattern, date_str))
+        pattern1 = r"^\d{4}/\d{1}/\d{2}$"
+        return bool(re.match(pattern, date_str)) or bool(re.match(pattern1, date_str))
     
     def save_data(self):
         file_path = os.path.join("Data", "data.csv")
@@ -149,16 +155,27 @@ class CasesFillPage(QWidget):
             QMessageBox.warning(self, "格式錯誤", "性別錯誤 請輸入 男 或 女 ")
             return  # 不儲存資料
 
+        # 檢查手機號碼格式
+        try:
+            phone_number = self.data_header.index("手機號碼")
+        except ValueError:
+            QMessageBox.warning(self, "錯誤", "找不到 '手機號碼' 欄位")
+            return
+        
+        phone = new_data[phone_number]
+        if not self.validate_phone_number(phone):
+            QMessageBox.warning(self, "格式錯誤", "手機號碼必須XXXX-XXXXXX")
+            return  # 不儲存資料
+
         try:
             # Write updated data back to CSV
-            with open(file_path, mode='w', newline='', encoding='utf-8-sig') as file:
+            with open(file_path, mode='a', newline='', encoding='utf-8-sig') as file:
                 writer = csv.writer(file)
-                writer.writerow(self.data_header)
+                # writer.writerow(self.data_header)
                 writer.writerow(new_data)
+            QMessageBox.information(self, "保存成功", "資料已成功儲存！")
         except Exception as e:
             QMessageBox.critical(self, "錯誤", f"寫入檔案時發生錯誤：{str(e)}")        
-        
-        print("Data saved to CSV file:", new_data)
 
     def clear_data(self):
         for row in range(self.table.rowCount()):
